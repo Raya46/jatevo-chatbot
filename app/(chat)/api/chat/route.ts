@@ -1,4 +1,3 @@
-import { geolocation } from "@vercel/functions";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -20,9 +19,9 @@ import { auth, type UserType } from "@/app/(auth)/auth";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import type { ChatModel } from "@/lib/ai/models";
-import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { myProvider } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -148,16 +147,23 @@ export async function POST(request: Request) {
       // New chat - no need to fetch messages, it's empty
     }
 
-    const uiMessages = [...convertToUIMessages(messagesFromDb), message];
+    // Convert messages and limit context window to prevent context_length_exceeded
+    const allMessages = [...convertToUIMessages(messagesFromDb), message];
 
-    const { longitude, latitude, city, country } = geolocation(request);
+    // Keep only last 3 messages to stay within OpenAI context limits
+    // This prevents context_length_exceeded errors
+    // 3 messages is extremely conservative and safe for image generation
+    const uiMessages = allMessages.slice(-3);
 
-    const requestHints: RequestHints = {
-      longitude,
-      latitude,
-      city,
-      country,
-    };
+    // If we truncated messages, log it for debugging
+    if (allMessages.length > 3) {
+      console.log(
+        `Context window truncated: ${allMessages.length} -> ${uiMessages.length} messages`
+      );
+    }
+
+    // Use minimal system prompt to save context space
+    const minimalSystemPrompt = "You are a helpful assistant.";
 
     await saveMessages({
       messages: [
@@ -181,7 +187,7 @@ export async function POST(request: Request) {
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: minimalSystemPrompt,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
@@ -192,6 +198,7 @@ export async function POST(request: Request) {
                   "createDocument",
                   "updateDocument",
                   "requestSuggestions",
+                  "generateImageTool",
                 ],
           experimental_transform: smoothStream({ chunking: "word" }),
           tools: {
@@ -202,6 +209,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            generateImageTool: generateImageTool(),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
@@ -294,6 +302,29 @@ export async function POST(request: Request) {
 
     if (error instanceof ChatSDKError) {
       return error.toResponse();
+    }
+
+    // Check for OpenAI context length exceeded error
+    if (
+      error instanceof Error &&
+      (error.message?.includes("context_length_exceeded") ||
+        error.message?.includes("exceeds the context window"))
+    ) {
+      console.warn("Context length exceeded, suggesting conversation restart", {
+        vercelId,
+      });
+      return new ChatSDKError("offline:chat").toResponse();
+    }
+
+    // Check for OpenAI rate limit error
+    if (
+      error instanceof Error &&
+      (error.message?.includes("rate_limit_exceeded") ||
+        error.message?.includes("Too Many Requests") ||
+        error.message?.includes("429"))
+    ) {
+      console.warn("Rate limit exceeded, please try again later", { vercelId });
+      return new ChatSDKError("rate_limit:chat").toResponse();
     }
 
     // Check for Vercel AI Gateway credit card error

@@ -32,6 +32,21 @@ This is a guide for using artifacts tools: \`createDocument\` and \`updateDocume
 Do not update document right after creating it. Wait for user feedback or request to update it.
 `;
 
+export const imageGenerationPrompt = `
+You have access to an image generation tool that can create images based on descriptions.
+When users ask for images, use the generateImageTool function with a descriptive prompt.
+The tool will generate images and display them in the chat interface.
+
+Examples of when to use image generation:
+- "Create an image of..."
+- "Generate a picture of..."
+- "Draw me..."
+- "Show me a picture of..."
+- Any request for visual content
+
+Always provide clear, descriptive prompts for the best image generation results.
+`;
+
 export const regularPrompt =
   "You are a friendly assistant! Keep your responses concise and helpful.";
 
@@ -63,7 +78,7 @@ export const systemPrompt = ({
     return `${regularPrompt}\n\n${requestPrompt}`;
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}\n\n${imageGenerationPrompt}`;
 };
 
 export const codePrompt = `
@@ -117,4 +132,4 @@ export const titlePrompt = `\n
     - you will generate a short title based on the first message a user begins a conversation with
     - ensure it is not more than 80 characters long
     - the title should be a summary of the user's message
-    - do not use quotes or colons`
+    - do not use quotes or colons`;

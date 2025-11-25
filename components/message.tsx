@@ -19,6 +19,7 @@ import {
   ToolOutput,
 } from "./elements/tool";
 import { SparklesIcon } from "./icons";
+import { ImageGeneration } from "./image-generation";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
@@ -267,6 +268,49 @@ const PurePreviewMessage = ({
               );
             }
 
+            if (type === "tool-generateImageTool") {
+              const { toolCallId, state } = part;
+
+              return (
+                <Tool defaultOpen={true} key={toolCallId}>
+                  <ToolHeader state={state} type="tool-generateImageTool" />
+                  <ToolContent>
+                    {state === "input-available" && (
+                      <ToolInput input={part.input} />
+                    )}
+                    {state === "output-available" && (
+                      <ToolOutput
+                        errorText={undefined}
+                        output={
+                          part.output &&
+                          typeof part.output === "object" &&
+                          "success" in part.output &&
+                          "imageUrl" in part.output ? (
+                            <div className="space-y-3">
+                              <ImageGeneration
+                                result={{
+                                  id: toolCallId,
+                                  imageUrl: part.output.imageUrl as string,
+                                  prompt: part.input.prompt,
+                                  cached: part.output.cached as
+                                    | boolean
+                                    | undefined,
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="rounded border p-2 text-red-500">
+                              Error: Failed to generate image
+                            </div>
+                          )
+                        }
+                      />
+                    )}
+                  </ToolContent>
+                </Tool>
+              );
+            }
+
             return null;
           })}
 
@@ -328,12 +372,9 @@ export const ThinkingMessage = () => {
         </div>
 
         <div className="flex w-full flex-col gap-2 md:gap-4">
-          <div className="p-0 text-muted-foreground text-sm">
-            Thinking...
-          </div>
+          <div className="p-0 text-muted-foreground text-sm">Thinking...</div>
         </div>
       </div>
     </motion.div>
   );
 };
-

@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { useImages } from "@/contexts/image-context";
 import { initialArtifactData, useArtifact } from "@/hooks/use-artifact";
 import { artifactDefinitions } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
 
 export function DataStreamHandler() {
-  const { dataStream,setDataStream } = useDataStream();
+  const { dataStream, setDataStream } = useDataStream();
 
   const { artifact, setArtifact, setMetadata } = useArtifact();
+  const { addGeneratedImage } = useImages();
 
   useEffect(() => {
     if (!dataStream?.length) {
@@ -72,12 +74,33 @@ export function DataStreamHandler() {
               status: "idle",
             };
 
+          case "data-imageDelta":
+            // Handle image generation
+            try {
+              const imageData = JSON.parse(delta.data);
+              addGeneratedImage({
+                id: imageData.id,
+                imageUrl: imageData.imageUrl,
+                prompt: imageData.prompt,
+              });
+            } catch (error) {
+              console.error("Failed to parse image data:", error);
+            }
+            return draftArtifact;
+
           default:
             return draftArtifact;
         }
       });
     }
-  }, [dataStream, setArtifact, setMetadata, artifact]);
+  }, [
+    dataStream,
+    setDataStream,
+    setArtifact,
+    setMetadata,
+    artifact,
+    addGeneratedImage,
+  ]);
 
   return null;
 }
