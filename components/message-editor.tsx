@@ -20,6 +20,7 @@ export type MessageEditorProps = {
   setMode: Dispatch<SetStateAction<"view" | "edit">>;
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
+  chatId: string;
 };
 
 export function MessageEditor({
@@ -27,6 +28,7 @@ export function MessageEditor({
   setMode,
   setMessages,
   regenerate,
+  chatId,
 }: MessageEditorProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -81,7 +83,8 @@ export function MessageEditor({
             setIsSubmitting(true);
 
             await deleteTrailingMessages({
-              id: message.id,
+              chatId,
+              timestamp: new Date(message.metadata?.createdAt || Date.now()),
             });
 
             setMessages((messages) => {

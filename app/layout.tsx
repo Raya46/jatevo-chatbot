@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import PWAInstallPrompt from "@/components/pwa-install-prompt";
+import PWAPerformanceMonitor from "@/components/pwa-performance-monitor";
+import ServiceWorkerProvider from "@/components/service-worker-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ImageProvider } from "@/contexts/image-context";
 
@@ -83,6 +86,9 @@ export default function RootLayout({
           <ImageProvider>
             <SessionProvider>{children}</SessionProvider>
           </ImageProvider>
+          <ServiceWorkerProvider />
+          <PWAInstallPrompt />
+          <PWAPerformanceMonitor />
         </ThemeProvider>
       </body>
     </html>
