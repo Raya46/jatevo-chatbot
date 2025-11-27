@@ -13,7 +13,12 @@ export async function middleware(request: NextRequest) {
     return new Response("pong", { status: 200 });
   }
 
-  if (pathname.startsWith("/api/auth")) {
+  if (
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/sw.js") ||
+    pathname.startsWith("/manifest.webmanifest") ||
+    pathname.startsWith("/offline")
+  ) {
     return NextResponse.next();
   }
 
@@ -53,7 +58,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - sw.js (service worker)
+     * - manifest.webmanifest (PWA manifest)
+     * - offline (offline page)
      */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|sw.js|manifest.webmanifest|offline).*)",
   ],
 };

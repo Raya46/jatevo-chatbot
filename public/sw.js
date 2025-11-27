@@ -32,6 +32,11 @@ self.addEventListener("install", (event) => {
         console.log("Service Worker: Static files cached");
         return self.skipWaiting();
       })
+      .catch((error) => {
+        console.log("Service Worker: Error caching static files:", error);
+        // Continue with installation even if caching fails
+        return self.skipWaiting();
+      })
   );
 });
 
