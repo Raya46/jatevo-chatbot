@@ -20,6 +20,7 @@ import {
 } from "./elements/tool";
 import { SparklesIcon } from "./icons";
 import { ImageGeneration } from "./image-generation";
+import { ImageGenerationSkeleton } from "./image-generation-skeleton";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
@@ -277,7 +278,9 @@ const PurePreviewMessage = ({
                   <ToolHeader state={state} type="tool-generateImageTool" />
                   <ToolContent>
                     {state === "input-available" && (
-                      <ToolInput input={part.input} />
+                      <div className="p-4">
+                        <ImageGenerationSkeleton />
+                      </div>
                     )}
                     {state === "output-available" && (
                       <ToolOutput
