@@ -150,7 +150,7 @@ export async function POST(request: Request) {
     // Convert messages and limit context window to prevent context_length_exceeded
     const allMessages = [...convertToUIMessages(messagesFromDb), message];
 
-    // Keep only last 3 messages to stay within OpenAI context limits
+    // Keep only last 3 messages to stay within context limits
     // This prevents context_length_exceeded errors
     // 3 messages is extremely conservative and safe for image generation
     const uiMessages = allMessages.slice(-3);
@@ -304,11 +304,13 @@ export async function POST(request: Request) {
       return error.toResponse();
     }
 
-    // Check for OpenAI context length exceeded error
+    // Check for context length exceeded error (works for both OpenAI and Gemini)
     if (
       error instanceof Error &&
       (error.message?.includes("context_length_exceeded") ||
-        error.message?.includes("exceeds the context window"))
+        error.message?.includes("exceeds the context window") ||
+        error.message?.includes("MAX_TOKENS") ||
+        error.message?.includes("tokens exceeds"))
     ) {
       console.warn("Context length exceeded, suggesting conversation restart", {
         vercelId,
@@ -316,15 +318,28 @@ export async function POST(request: Request) {
       return new ChatSDKError("offline:chat").toResponse();
     }
 
-    // Check for OpenAI rate limit error
+    // Check for rate limit error (works for both OpenAI and Gemini)
     if (
       error instanceof Error &&
       (error.message?.includes("rate_limit_exceeded") ||
         error.message?.includes("Too Many Requests") ||
-        error.message?.includes("429"))
+        error.message?.includes("429") ||
+        error.message?.includes("RESOURCE_EXHAUSTED") ||
+        error.message?.includes("QUOTA_EXCEEDED"))
     ) {
       console.warn("Rate limit exceeded, please try again later", { vercelId });
       return new ChatSDKError("rate_limit:chat").toResponse();
+    }
+
+    // Check for Google Gemini specific errors
+    if (
+      error instanceof Error &&
+      (error.message?.includes("GOOGLE_GENERATIVE_AI_API_KEY") ||
+        error.message?.includes("API_KEY_INVALID") ||
+        error.message?.includes("PERMISSION_DENIED"))
+    ) {
+      console.warn("Google API key issue detected", { vercelId });
+      return new ChatSDKError("bad_request:api").toResponse();
     }
 
     // Check for Vercel AI Gateway credit card error

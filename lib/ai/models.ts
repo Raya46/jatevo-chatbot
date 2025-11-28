@@ -9,14 +9,13 @@ export type ChatModel = {
 export const chatModels: ChatModel[] = [
   {
     id: "chat-model",
-    name: "GPT-4o Mini",
-    description:
-      "Fast and efficient model for general chat (higher rate limits)",
+    name: "Gemini 2.5 Flash",
+    description: "Fast and efficient model for general chat (cost-effective)",
   },
   {
     id: "chat-model-reasoning",
-    name: "GPT-4o Mini Reasoning",
+    name: "Gemini 2.5 Flash Reasoning",
     description:
-      "Efficient reasoning model with step-by-step thinking (optimized for rate limits)",
+      "Efficient reasoning model with step-by-step thinking (optimized for complex tasks)",
   },
 ];

@@ -1,6 +1,6 @@
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { Redis } from "@upstash/redis";
-import { experimental_generateImage as generateImage, tool } from "ai";
+import { generateText, tool } from "ai";
 import { z } from "zod";
 import { r2Upload } from "@/lib/r2-upload";
 import { generateUUID } from "@/lib/utils";
@@ -76,22 +76,50 @@ export const generateImageTool = () =>
           return { imageUrl: cachedUrl, success: true, cached: true };
         }
 
-        const { image } = await generateImage({
-          model: openai.imageModel("dall-e-3"),
+        const result = await generateText({
+          model: google("gemini-2.5-flash-image-preview"),
           prompt: truncatedPrompt,
-          size: "1024x1024",
           providerOptions: {
-            openai: { style: "vivid", quality: "hd" },
+            google: {
+              imageConfig: {
+                aspectRatio: "1:1",
+              },
+            },
           },
         });
 
-        // Convert base64 to buffer for upload
-        const imageBuffer = Buffer.from(image.base64, "base64");
+        // Find the generated image in the result files
+        let imageFile: any = null;
+        for (const file of result.files) {
+          if (file.mediaType?.startsWith("image/")) {
+            console.log("Found image file:", file);
+            imageFile = file;
+            break;
+          }
+        }
+
+        if (!imageFile) {
+          throw new Error("No image generated in response");
+        }
+
+        // Convert the image data to buffer for upload
+        let imageBuffer: Buffer;
+        if (imageFile.data instanceof Uint8Array) {
+          imageBuffer = Buffer.from(imageFile.data);
+        } else if (typeof imageFile.data === "string") {
+          imageBuffer = Buffer.from(imageFile.data, "base64");
+        } else {
+          throw new Error("Unsupported image data format");
+        }
 
         // Create file object for upload
-        const file = new File([imageBuffer], "generated-image.png", {
-          type: "image/png",
-        });
+        const file = new File(
+          [new Uint8Array(imageBuffer)],
+          "generated-image.png",
+          {
+            type: imageFile.mediaType || "image/png",
+          }
+        );
 
         // Upload to R2
         const uploadResult = await r2Upload.uploadImage(file, {
@@ -103,8 +131,11 @@ export const generateImageTool = () =>
         await setCache(cacheKey, uploadResult.url);
 
         return { imageUrl: uploadResult.url, success: true, cached: false };
-      } catch {
-        throw new Error("Failed to generate image");
+      } catch (error) {
+        console.error("Image generation error:", error);
+        throw new Error(
+          `Failed to generate image: ${error instanceof Error ? error.message : "Unknown error"}`
+        );
       }
     },
     toModelOutput: () => {

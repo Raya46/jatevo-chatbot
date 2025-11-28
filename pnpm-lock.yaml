@@ -11924,7 +11924,7 @@ snapshots:
 
   terser-webpack-plugin@5.3.14(esbuild@0.19.12)(webpack@5.103.0(esbuild@0.19.12)):
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.31
       jest-worker: 27.5.1
       schema-utils: 4.3.3
       serialize-javascript: 6.0.2

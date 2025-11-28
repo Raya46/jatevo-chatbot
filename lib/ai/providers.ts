@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import {
   customProvider,
   extractReasoningMiddleware,
@@ -25,12 +25,12 @@ export const myProvider = isTestEnvironment
     })()
   : customProvider({
       languageModels: {
-        "chat-model": openai("gpt-4o-mini"), // Cheaper and higher rate limits
+        "chat-model": google("gemini-2.5-flash"), // Fast and cost-effective
         "chat-model-reasoning": wrapLanguageModel({
-          model: openai("gpt-4o-mini"), // Use gpt-4o-mini instead of o1-preview for now
+          model: google("gemini-2.5-flash"), // Use Gemini 2.5 Flash with reasoning
           middleware: extractReasoningMiddleware({ tagName: "think" }),
         }),
-        "title-model": openai("gpt-4o-mini"),
-        "artifact-model": openai("gpt-4o-mini"),
+        "title-model": google("gemini-2.5-flash"),
+        "artifact-model": google("gemini-2.5-flash"),
       },
     });
