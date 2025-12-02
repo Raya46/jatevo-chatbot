@@ -104,11 +104,15 @@ export const generateImageTool = () =>
 
         // Convert the image data to buffer for upload
         let imageBuffer: Buffer;
-        if (imageFile.data instanceof Uint8Array) {
+        if (imageFile.base64Data) {
+          // Handle base64 data format from Gemini
+          imageBuffer = Buffer.from(imageFile.base64Data, "base64");
+        } else if (imageFile.data instanceof Uint8Array) {
           imageBuffer = Buffer.from(imageFile.data);
         } else if (typeof imageFile.data === "string") {
           imageBuffer = Buffer.from(imageFile.data, "base64");
         } else {
+          console.error("Image file structure:", imageFile);
           throw new Error("Unsupported image data format");
         }
 
