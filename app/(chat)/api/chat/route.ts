@@ -162,8 +162,27 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use minimal system prompt to save context space
-    const minimalSystemPrompt = "You are a helpful assistant.";
+    // Use enhanced system prompt for Jatevo DeepSeek-R1 to ensure proper tool usage
+    const enhancedSystemPrompt = `You are a helpful assistant with access to tools.
+
+CRITICAL TOOL USAGE RULES:
+1. When users ask for images, you MUST call the generateImageTool function immediately
+2. Do NOT describe what you would generate - actually call the tool
+3. Use tools when appropriate
+4. Focus on answering the user's request
+
+IMAGE GENERATION:
+- Any request for visual content requires calling generateImageTool
+- Examples: "create an image", "generate a picture", "draw me", "make a picture of", "create me an image"
+- When you detect an image request, call generateImageTool immediately with a descriptive prompt
+- Do NOT explain what you're doing - just call the tool
+
+RESPONSE STYLE:
+- Be helpful and direct
+- Provide clear and concise answers
+- Do not include your internal reasoning process in responses
+
+If you detect an image request, call generateImageTool immediately with a descriptive prompt.`;
 
     await saveMessages({
       messages: [
@@ -187,19 +206,16 @@ export async function POST(request: Request) {
       execute: ({ writer: dataStream }) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: minimalSystemPrompt,
+          system: enhancedSystemPrompt,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
-          experimental_activeTools:
-            selectedChatModel === "chat-model-reasoning"
-              ? []
-              : [
-                  "getWeather",
-                  "createDocument",
-                  "updateDocument",
-                  "requestSuggestions",
-                  "generateImageTool",
-                ],
+          experimental_activeTools: [
+            "getWeather",
+            "createDocument",
+            "updateDocument",
+            "requestSuggestions",
+            "generateImageTool",
+          ],
           experimental_transform: smoothStream({ chunking: "word" }),
           tools: {
             getWeather,

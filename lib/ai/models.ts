@@ -9,13 +9,13 @@ export type ChatModel = {
 export const chatModels: ChatModel[] = [
   {
     id: "chat-model",
-    name: "Gemini 2.5 Flash",
-    description: "Fast and efficient model for general chat (cost-effective)",
+    name: "Jatevo DeepSeek-R1",
+    description: "Advanced reasoning model for general chat and complex tasks",
   },
   {
     id: "chat-model-reasoning",
-    name: "Gemini 2.5 Flash Reasoning",
+    name: "Jatevo DeepSeek-R1 Reasoning",
     description:
-      "Efficient reasoning model with step-by-step thinking (optimized for complex tasks)",
+      "Enhanced reasoning model with step-by-step thinking for complex problem-solving",
   },
 ];

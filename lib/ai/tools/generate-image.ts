@@ -1,7 +1,7 @@
-import { google } from "@ai-sdk/google";
 import { Redis } from "@upstash/redis";
 import { generateText, tool } from "ai";
 import { z } from "zod";
+import { myProvider } from "@/lib/ai/providers";
 import { r2Upload } from "@/lib/r2-upload";
 import { generateUUID } from "@/lib/utils";
 
@@ -77,7 +77,7 @@ export const generateImageTool = () =>
         }
 
         const result = await generateText({
-          model: google("gemini-2.5-flash-image-preview"),
+          model: myProvider.languageModel("image-model"),
           prompt: truncatedPrompt,
           providerOptions: {
             google: {
