@@ -162,27 +162,56 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use enhanced system prompt for Jatevo DeepSeek-R1 to ensure proper tool usage
-    const enhancedSystemPrompt = `You are a helpful assistant with access to tools.
+    // System prompt based on model type
+    const isToolModel = selectedChatModel === "tool-model";
+
+    const systemPrompt = isToolModel
+      ? `You are a helpful assistant with access to tools that you MUST execute when needed.
 
 CRITICAL TOOL USAGE RULES:
-1. When users ask for images, you MUST call the generateImageTool function immediately
-2. Do NOT describe what you would generate - actually call the tool
-3. Use tools when appropriate
-4. Focus on answering the user's request
+1. When users ask for images, you MUST execute the generateImageTool function immediately
+2. Do NOT describe what you would generate - ACTUALLY CALL THE TOOL
+3. When you need to use a tool, CALL THE TOOL FUNCTION - do not return JSON describing the tool call
+4. NEVER return JSON like {"tool": "generateImageTool", "arguments": {...}} - instead, actually call the tool
+5. Focus on answering the user's request by executing tools when needed
 
 IMAGE GENERATION:
-- Any request for visual content requires calling generateImageTool
-- Examples: "create an image", "generate a picture", "draw me", "make a picture of", "create me an image"
-- When you detect an image request, call generateImageTool immediately with a descriptive prompt
-- Do NOT explain what you're doing - just call the tool
+- Any request for visual content requires EXECUTING generateImageTool
+- Examples: "create an image", "generate a picture", "draw me", "make a picture of", "buat gambar", "gambar", "foto"
+- When you detect an image request, EXECUTE generateImageTool immediately with a descriptive prompt
+- Do NOT explain what you're doing - just EXECUTE the tool
+
+TOOL EXECUTION:
+- When you decide to use a tool, EXECUTE it by calling the tool function
+- Do NOT describe the tool call in text
+- Do NOT return JSON describing the tool call
+- Actually CALL the tool function
 
 RESPONSE STYLE:
 - Be helpful and direct
 - Provide clear and concise answers
-- Do not include your internal reasoning process in responses
+- Respond in the user's language when possible
 
-If you detect an image request, call generateImageTool immediately with a descriptive prompt.`;
+IMPORTANT: NEVER return tool call descriptions as text. ALWAYS execute the actual tool function.`
+      : `You are a helpful assistant with advanced reasoning capabilities. Provide clear, accurate, and thoughtful responses to help users with their questions and tasks.
+
+CAPABILITIES:
+- Strong reasoning and problem-solving skills
+- Multi-language support (English, Indonesian, Spanish, French, etc.)
+- Ability to understand context and provide relevant information
+- Clear and structured communication
+
+IMPORTANT NOTE ABOUT TOOLS:
+- You do NOT have access to tools like image generation, weather checking, or document creation
+- If the user asks for image generation, weather information, or other tool-based features, politely recommend switching to "Gemini 2.5 Flash" model
+- Example: "I notice you're asking for image generation. For that feature, please switch to the 'Gemini 2.5 Flash' model which has tool calling capabilities."
+
+RESPONSE STYLE:
+- Be helpful and direct
+- Provide clear and concise answers
+- Do not include your internal reasoning process in responses unless specifically asked
+- Respond in the user's language when possible
+- Use appropriate formatting for better readability`;
 
     await saveMessages({
       messages: [
@@ -204,29 +233,30 @@ If you detect an image request, call generateImageTool immediately with a descri
 
     const stream = createUIMessageStream({
       execute: ({ writer: dataStream }) => {
+        // Configure based on model type
+        const modelToUse = isToolModel
+          ? myProvider.languageModel("tool-model")
+          : myProvider.languageModel(selectedChatModel);
+
         const result = streamText({
-          model: myProvider.languageModel(selectedChatModel),
-          system: enhancedSystemPrompt,
+          model: modelToUse,
+          system: systemPrompt,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
-          experimental_activeTools: [
-            "getWeather",
-            "createDocument",
-            "updateDocument",
-            "requestSuggestions",
-            "generateImageTool",
-          ],
+          tools: isToolModel
+            ? {
+                getWeather,
+                createDocument: createDocument({ session, dataStream }),
+                updateDocument: updateDocument({ session, dataStream }),
+                requestSuggestions: requestSuggestions({
+                  session,
+                  dataStream,
+                }),
+                generateImageTool: generateImageTool(),
+              }
+            : undefined,
+          toolChoice: isToolModel ? "auto" : "none",
           experimental_transform: smoothStream({ chunking: "word" }),
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-            }),
-            generateImageTool: generateImageTool(),
-          },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: "stream-text",

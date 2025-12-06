@@ -12,4 +12,4 @@ export const jatevo = createOpenAICompatible({
 });
 
 // Export default model
-export const jatevoModel = jatevo("deepseek-ai/DeepSeek-R1-0528");
+export const jatevoModel = jatevo("gpt-oss-120b");
