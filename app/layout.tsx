@@ -11,9 +11,73 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://chat.vercel.ai"),
-  title: "Next.js Chatbot Template",
-  description: "Next.js chatbot template using the AI SDK.",
+  metadataBase: new URL("https://jatevo-chatbot-web.vercel.app/"),
+  title: {
+    default: "Jatevo Chatbot - AI-Powered Conversations",
+    template: "%s | Jatevo Chatbot",
+  },
+  description:
+    "Experience advanced AI conversations with Jatevo Chatbot. Features multiple AI models including GPT, DeepSeek, ZAI, and Gemini with tool calling capabilities for image generation, weather checks, and more.",
+  keywords: [
+    "AI chatbot",
+    "Jatevo",
+    "GPT",
+    "DeepSeek",
+    "ZAI",
+    "Gemini",
+    "AI conversation",
+    "image generation",
+    "AI tools",
+    "chat AI",
+    "artificial intelligence",
+    "machine learning",
+    "natural language processing",
+  ],
+  authors: [{ name: "Jatevo" }],
+  creator: "Jatevo",
+  publisher: "Jatevo",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://jatevo-chatbot-web.vercel.app/",
+    title: "Jatevo Chatbot - AI-Powered Conversations",
+    description:
+      "Experience advanced AI conversations with multiple models and tool calling capabilities.",
+    siteName: "Jatevo Chatbot",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Jatevo Chatbot - AI-Powered Conversations",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Jatevo Chatbot - AI-Powered Conversations",
+    description:
+      "Experience advanced AI conversations with multiple models and tool calling capabilities.",
+    images: ["/og-image.png"],
+    creator: "@jatevo",
+  },
+  alternates: {
+    canonical: "https://jatevo-chatbot-web.vercel.app/",
+  },
+  category: "technology",
+  classification: "Artificial Intelligence",
+  referrer: "origin-when-cross-origin",
 };
 
 export const viewport = {
