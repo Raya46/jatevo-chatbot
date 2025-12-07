@@ -316,3 +316,152 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile font size adjustments */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+
+  /* Reduce font sizes for mobile */
+  body {
+    font-size: 0.875rem;
+  }
+
+  /* Adjust heading sizes for mobile */
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
+  h4 {
+    font-size: 1rem;
+  }
+
+  h5 {
+    font-size: 0.875rem;
+  }
+
+  h6 {
+    font-size: 0.75rem;
+  }
+
+  /* Adjust paragraph and text elements */
+  p {
+    font-size: 0.875rem;
+  }
+
+  /* Adjust list items */
+  li {
+    font-size: 0.875rem;
+  }
+
+  /* Adjust label and form elements */
+  label {
+    font-size: 0.875rem;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 0.875rem;
+  }
+
+  /* Adjust button text */
+  button {
+    font-size: 0.875rem;
+  }
+
+  /* Adjust small text */
+  small {
+    font-size: 0.75rem;
+  }
+
+  /* Message component specific font adjustments for mobile */
+  .message-content,
+  [data-testid="message-content"] {
+    font-size: 0.8rem !important;
+  }
+
+  /* Override text-sm in message content */
+  .text-sm {
+    font-size: 0.8rem !important;
+  }
+
+  /* Streamdown content in messages */
+  .streamdown,
+  [data-testid="message-content"] * {
+    font-size: 0.8rem !important;
+  }
+
+  /* Tool content font size */
+  .tool-content,
+  .tool-input,
+  .tool-output {
+    font-size: 0.8rem !important;
+  }
+
+  /* Greeting and suggestion text */
+  .greeting-text,
+  .suggestion-text {
+    font-size: 0.8rem !important;
+  }
+
+  /* Chat input and related elements */
+  .chat-input,
+  .prompt-input,
+  [data-testid="multimodal-input"] {
+    font-size: 0.875rem !important;
+  }
+
+  /* Textarea and input elements */
+  textarea,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"] {
+    font-size: 0.875rem !important;
+  }
+
+  /* Override text-sm in all contexts */
+  .text-sm {
+    font-size: 0.8rem !important;
+  }
+
+  /* Specific overrides for prompt components */
+  .prompt-input-textarea,
+  .prompt-input textarea {
+    font-size: 0.875rem !important;
+  }
+
+  /* Greeting text adjustments */
+  .text-xl,
+  .text-2xl {
+    font-size: 1rem !important;
+  }
+
+  /* Suggestion buttons */
+  .suggestion-button,
+  [data-testid="suggested-actions"] button {
+    font-size: 0.75rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  /* Button size overrides */
+  .btn-sm,
+  button[size="sm"] {
+    font-size: 0.75rem !important;
+  }
+
+  /* Model selector text */
+  .font-medium.text-xs {
+    font-size: 0.625rem !important;
+  }
+}

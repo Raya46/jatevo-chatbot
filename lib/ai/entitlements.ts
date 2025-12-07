@@ -20,14 +20,7 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    */
   regular: {
     maxMessagesPerDay: 100,
-    availableChatModelIds: [
-      "chat-model",
-      "tool-model",
-      "zai-glm-4.6",
-      "z-ai-glm-4.5",
-      "deepseek-r1",
-      "deepseek-v3",
-    ],
+    availableChatModelIds: ["chat-model", "tool-model"],
   },
 
   /*
