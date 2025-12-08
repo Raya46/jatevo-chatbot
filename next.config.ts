@@ -1,15 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Disable Turbopack to avoid Webpack/Turbopack binding issues
-  experimental: {
-    ppr: true,
-    turbo: {
-      resolveAlias: {
-        // Fallback to webpack for server components
-        "react-server-dom-webpack/server.edge":
-          "react-server-dom-webpack/server.edge",
-      },
+  // Cache Components (includes PPR functionality)
+  cacheComponents: true,
+  // Turbopack configuration (stable in Next.js 16)
+  turbopack: {
+    resolveAlias: {
+      // Fallback to webpack for server components
+      "react-server-dom-webpack/server.edge":
+        "react-server-dom-webpack/server.edge",
     },
   },
   images: {

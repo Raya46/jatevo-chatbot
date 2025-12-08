@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
 import PWAInstallPrompt from "@/components/pwa-install-prompt";
 import PWAPerformanceMonitor from "@/components/pwa-performance-monitor";
@@ -147,9 +148,11 @@ export default function RootLayout({
           enableSystem
         >
           <Toaster position="top-center" />
-          <ImageProvider>
-            <SessionProvider>{children}</SessionProvider>
-          </ImageProvider>
+          <Suspense fallback={<div>Loading...</div>}>
+            <ImageProvider>
+              <SessionProvider>{children}</SessionProvider>
+            </ImageProvider>
+          </Suspense>
           <ServiceWorkerProvider />
           <PWAInstallPrompt />
           <PWAPerformanceMonitor />
