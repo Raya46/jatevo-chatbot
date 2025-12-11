@@ -7,6 +7,7 @@ import PWAPerformanceMonitor from "@/components/pwa-performance-monitor";
 import ServiceWorkerProvider from "@/components/service-worker-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ImageProvider } from "@/contexts/image-context";
+import { WebSearchProvider } from "@/contexts/web-search-context";
 
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
@@ -150,7 +151,9 @@ export default function RootLayout({
           <Toaster position="top-center" />
           <Suspense fallback={<div>Loading...</div>}>
             <ImageProvider>
-              <SessionProvider>{children}</SessionProvider>
+              <WebSearchProvider>
+                <SessionProvider>{children}</SessionProvider>
+              </WebSearchProvider>
             </ImageProvider>
           </Suspense>
           <ServiceWorkerProvider />

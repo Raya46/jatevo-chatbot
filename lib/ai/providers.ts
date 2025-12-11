@@ -1,7 +1,13 @@
 import { google } from "@ai-sdk/google";
+import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { customProvider } from "ai";
 import { isTestEnvironment } from "../constants";
 import { jatevo } from "./providers/jatevo-provider";
+
+// Create OpenRouter provider instance for Perplexity and other models
+export const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY || "",
+});
 
 export const myProvider = isTestEnvironment
   ? (() => {

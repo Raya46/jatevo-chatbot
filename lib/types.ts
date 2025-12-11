@@ -4,6 +4,7 @@ import type { ArtifactKind } from "@/components/artifact";
 import type { createDocument } from "./ai/tools/create-document";
 import type { generateImageTool } from "./ai/tools/generate-image";
 import type { getWeather } from "./ai/tools/get-weather";
+import type { perplexitySearchTool } from "./ai/tools/perplexity-search";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
 import type { updateDocument } from "./ai/tools/update-document";
 import type { Suggestion } from "./db/schema";
@@ -25,12 +26,18 @@ type requestSuggestionsTool = InferUITool<
 >;
 type generateImageToolType = InferUITool<ReturnType<typeof generateImageTool>>;
 
+// Perplexity Search tool type
+type perplexitySearchToolType = InferUITool<
+  ReturnType<typeof perplexitySearchTool>
+>;
+
 export type ChatTools = {
   getWeather: weatherTool;
   createDocument: createDocumentTool;
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
   generateImageTool: generateImageToolType;
+  perplexitySearch: perplexitySearchToolType;
 };
 
 export type CustomUIDataTypes = {

@@ -23,6 +23,7 @@ import { myProvider } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { generateImageTool } from "@/lib/ai/tools/generate-image";
 import { getWeather } from "@/lib/ai/tools/get-weather";
+import { perplexitySearchTool } from "@/lib/ai/tools/perplexity-search";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { isProductionEnvironment } from "@/lib/constants";
@@ -115,7 +116,7 @@ export async function POST(request: Request) {
 
     const userType: UserType = session.user.type;
 
-    const messageCount = await getMessageCountByUserId({
+    const messageCount: number = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,
     });
@@ -170,6 +171,7 @@ export async function POST(request: Request) {
 
 CRITICAL TOOL USAGE RULES:
 • When users ask for images, you MUST execute the generateImageTool function immediately
+• When users ask for real-time information, news, or current data, you MUST execute the perplexitySearchTool
 • Do NOT describe what you would generate - ACTUALLY CALL THE TOOL
 • When you need to use a tool, CALL THE TOOL FUNCTION - do not return JSON describing the tool call
 • NEVER return JSON like {"tool": "generateImageTool", "arguments": {...}} - instead, actually call the tool
@@ -180,6 +182,23 @@ IMAGE GENERATION:
 • Examples: "create an image", "generate a picture", "draw me", "make a picture of", "buat gambar", "gambar", "foto"
 • When you detect an image request, EXECUTE generateImageTool immediately with a descriptive prompt
 • Do NOT explain what you're doing - just EXECUTE the tool
+
+REAL-TIME INFORMATION SEARCH (PERPLEXITY):
+• Use perplexitySearchTool when users ask for:
+  - Latest information, news, or updates
+  - Real-time data that changes frequently (stock prices, weather, sports scores)
+  - Information with keywords: "search", "cari", "cek", "googling", "latest", "terbaru", "update"
+  - Explicit instructions to search the internet
+  - Questions with patterns: "what ... now?", "how much ... today?", "who ... latest?", "apa ... sekarang?", "berapa ... hari ini?"
+  - Requests for current events, recent developments, or timely information
+  - When user needs references, sources, or web-based explanations
+• Examples: "What's the latest news on AI?", "Search for information about...", "Cari info terbaru tentang...", "cek harga saham hari ini", "apa berita terbaru tentang..."
+• IMPORTANT: This tool uses Perplexity via OpenRouter for real-time web search with citations
+• Do NOT use perplexitySearchTool for:
+  - Opinion-based questions or subjective matters
+  - General knowledge, concepts, or historical facts
+  - Creative writing, brainstorming, or hypothetical scenarios
+  - Questions that can be answered from training data without web access
 
 TOOL EXECUTION:
 • When you decide to use a tool, EXECUTE it by calling the tool function
@@ -202,9 +221,9 @@ CAPABILITIES:
 • Clear and structured communication
 
 IMPORTANT NOTE ABOUT TOOLS:
-• You do NOT have access to tools like image generation, weather checking, or document creation
-• If the user asks for image generation, weather information, or other tool-based features, politely recommend switching to "Gemini 2.5 Flash" model
-• Example: "I notice you're asking for image generation. For that feature, please switch to the 'Gemini 2.5 Flash' model which has tool calling capabilities."
+• You do NOT have access to tools like image generation, weather checking, document creation, or web search
+• If the user asks for image generation, web search, or other tool-based features, politely recommend switching to "Gemini 2.5 Flash" model
+• Example: "I notice you're asking for web search. For that feature, please switch to the 'Gemini 2.5 Flash' model which has tool calling capabilities including real-time search."
 
 RESPONSE STYLE:
 • Be helpful and direct
@@ -260,6 +279,7 @@ CRITICAL FORMATTING RULES:
                   dataStream,
                 }),
                 generateImageTool: generateImageTool(),
+                perplexitySearch: perplexitySearchTool(),
               }
             : undefined,
           toolChoice: isToolModel ? "auto" : "none",

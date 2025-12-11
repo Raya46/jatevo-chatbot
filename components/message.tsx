@@ -26,6 +26,8 @@ import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
+import { WebSearchGeneration } from "./web-search-generation";
+import { WebSearchGenerationSkeleton } from "./web-search-generation-skeleton";
 
 const PurePreviewMessage = ({
   chatId,
@@ -305,6 +307,55 @@ const PurePreviewMessage = ({
                           ) : (
                             <div className="rounded border p-2 text-red-500">
                               Error: Failed to generate image
+                            </div>
+                          )
+                        }
+                      />
+                    )}
+                  </ToolContent>
+                </Tool>
+              );
+            }
+
+            if (type === "tool-perplexitySearch") {
+              const { toolCallId, state } = part;
+
+              return (
+                <Tool defaultOpen={true} key={toolCallId}>
+                  <ToolHeader state={state} type="tool-perplexitySearch" />
+                  <ToolContent>
+                    {state === "input-available" && (
+                      <div className="p-4">
+                        <WebSearchGenerationSkeleton />
+                      </div>
+                    )}
+                    {state === "output-available" && (
+                      <ToolOutput
+                        errorText={undefined}
+                        output={
+                          part.output &&
+                          typeof part.output === "object" &&
+                          "results" in part.output ? (
+                            <div className="space-y-3">
+                              <WebSearchGeneration
+                                result={{
+                                  query: part.input.query as string,
+                                  content: `Found ${part.output.results.length} search results`,
+                                  hasCitations: part.output.results.length > 0,
+                                  sources: part.output.results.map(
+                                    (result: any) => ({
+                                      title: result.title,
+                                      url: result.url,
+                                    })
+                                  ),
+                                  success: true,
+                                  timestamp: new Date().toISOString(),
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="rounded border p-2 text-red-500">
+                              Error: Failed to perform web search
                             </div>
                           )
                         }

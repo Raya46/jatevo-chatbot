@@ -11,6 +11,7 @@ import {
   inArray,
   lt,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -136,9 +137,13 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
 
     const chatIds = userChats.map((c) => c.id);
 
-    await db.delete(vote).where(inArray(vote.chatId, chatIds));
-    await db.delete(message).where(inArray(message.chatId, chatIds));
-    await db.delete(stream).where(inArray(stream.chatId, chatIds));
+    await db.delete(vote).where(inArray(vote.chatId as any, chatIds as any));
+    await db
+      .delete(message)
+      .where(inArray(message.chatId as any, chatIds as any));
+    await db
+      .delete(stream)
+      .where(inArray(stream.chatId as any, chatIds as any));
 
     const deletedChats = await db
       .delete(chat)
@@ -468,13 +473,19 @@ export async function deleteMessagesByChatIdAfterTimestamp({
       await db
         .delete(vote)
         .where(
-          and(eq(vote.chatId, chatId), inArray(vote.messageId, messageIds))
+          and(
+            eq(vote.chatId, chatId),
+            inArray(vote.messageId as any, messageIds as any)
+          )
         );
 
       return await db
         .delete(message)
         .where(
-          and(eq(message.chatId, chatId), inArray(message.id, messageIds))
+          and(
+            eq(message.chatId, chatId),
+            inArray(message.id as any, messageIds as any)
+          )
         );
     }
   } catch (_error) {
@@ -527,14 +538,14 @@ export async function getMessageCountByUserId({
 }: {
   id: string;
   differenceInHours: number;
-}) {
+}): Promise<number> {
   try {
     const twentyFourHoursAgo = new Date(
       Date.now() - differenceInHours * 60 * 60 * 1000
     );
 
     const [stats] = await db
-      .select({ count: count(message.id) })
+      .select({ count: sql<number>`count(${message.id})` })
       .from(message)
       .innerJoin(chat, eq(message.chatId, chat.id))
       .where(
@@ -546,7 +557,7 @@ export async function getMessageCountByUserId({
       )
       .execute();
 
-    return stats?.count ?? 0;
+    return Number(stats?.count ?? 0);
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
