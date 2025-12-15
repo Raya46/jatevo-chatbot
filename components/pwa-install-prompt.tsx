@@ -1,6 +1,6 @@
 "use client";
 
-import { Apple, Download, Monitor, Smartphone } from "lucide-react";
+import { Apple, Download, Monitor, Smartphone, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +9,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 // Regex pattern at top level for performance
@@ -27,13 +26,13 @@ interface BeforeInstallPromptEvent extends Event {
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [installStatus, setInstallStatus] = useState<
     "idle" | "installing" | "installed"
   >("idle");
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
     // Check if device is iOS
@@ -47,19 +46,24 @@ export default function PWAInstallPrompt() {
     ).matches;
     setIsStandalone(isStandaloneMode);
 
+    // Check if user has dismissed the banner
+    const dismissed = localStorage.getItem("pwa-install-dismissed") === "true";
+    setIsDismissed(dismissed);
+
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setIsInstallable(true);
     };
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
       setInstallStatus("installed");
-      setIsInstallable(false);
       setDeferredPrompt(null);
       setShowDialog(false);
+      // Also dismiss banner after install
+      localStorage.setItem("pwa-install-dismissed", "true");
+      setIsDismissed(true);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
@@ -75,7 +79,15 @@ export default function PWAInstallPrompt() {
   }, []);
 
   const handleInstallClick = async () => {
+    if (isIOS) {
+      // For iOS, open dialog with instructions
+      setShowDialog(true);
+      return;
+    }
+
     if (!deferredPrompt) {
+      // If no deferred prompt (non-installable browser), maybe open generic instructions?
+      setShowDialog(true);
       return;
     }
 
@@ -92,50 +104,54 @@ export default function PWAInstallPrompt() {
       }
 
       setDeferredPrompt(null);
-      setIsInstallable(false);
     } catch (error) {
       console.error("Error during installation:", error);
       setInstallStatus("idle");
     }
   };
 
-  const handleIOSInstall = () => {
-    setShowDialog(true);
+  const handleClose = () => {
+    setIsDismissed(true);
+    localStorage.setItem("pwa-install-dismissed", "true");
   };
 
-  // Don't show if already installed
-  if (isStandalone || installStatus === "installed") {
+  // Don't show if already installed or dismissed
+  if (isStandalone || installStatus === "installed" || isDismissed) {
     return null;
   }
 
-  // Show native install button for supported browsers
-  if (isInstallable && deferredPrompt && !isIOS) {
-    return (
-      <div className="fixed right-4 bottom-4 z-50">
-        <div className="max-w-sm rounded-lg border border-border bg-background p-4 shadow-lg">
+  // Unified banner for all devices
+  return (
+    <>
+      <div className="fixed top-0 right-0 left-0 z-50 border-border border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              <div
-                aria-label="Jatevo Chatbot"
-                className="h-12 w-12 rounded-lg bg-center bg-cover"
-                role="img"
-                style={{ backgroundImage: 'url("/jatevo.png")' }}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
+            <div
+              aria-label="Jatevo Chatbot"
+              className="h-8 w-8 rounded-lg bg-center bg-cover"
+              role="img"
+              style={{ backgroundImage: 'url("/jatevo.png")' }}
+            />
+            <div>
               <p className="font-medium text-sm">Install Jatevo Chatbot</p>
-              <p className="text-muted-foreground text-xs">
-                Get the full experience on your device
+              <p className="flex items-center gap-1 text-muted-foreground text-xs">
+                tap <Download className="h-3 w-3" /> then add to home screen
               </p>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
             <Button
-              className="flex-shrink-0"
               disabled={installStatus === "installing"}
               onClick={handleInstallClick}
               size="sm"
             >
               {installStatus === "installing" ? (
                 "Installing..."
+              ) : isIOS ? (
+                <>
+                  <Apple className="mr-1 h-4 w-4" />
+                  Install
+                </>
               ) : (
                 <>
                   <Download className="mr-1 h-4 w-4" />
@@ -143,99 +159,117 @@ export default function PWAInstallPrompt() {
                 </>
               )}
             </Button>
+            <Button
+              aria-label="Close"
+              className="h-8 w-8"
+              onClick={handleClose}
+              size="icon"
+              variant="ghost"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
-    );
-  }
 
-  // Show iOS install instructions
-  if (isIOS && !isStandalone) {
-    return (
-      <div className="fixed right-4 bottom-4 z-50">
-        <Dialog onOpenChange={setShowDialog} open={showDialog}>
-          <DialogTrigger asChild>
-            <Button
-              className="flex items-center gap-2 shadow-lg"
-              onClick={handleIOSInstall}
-            >
-              <Apple className="h-4 w-4" />
-              Install App
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Smartphone className="h-5 w-5" />
-                Install on iOS Device
-              </DialogTitle>
-              <DialogDescription>
-                Follow these steps to install Jatevo Chatbot on your iOS device:
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
-                  1
+      {/* Dialog for iOS (and fallback instructions) */}
+      <Dialog onOpenChange={setShowDialog} open={showDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              {isIOS ? "Install on iOS Device" : "Install App"}
+            </DialogTitle>
+            <DialogDescription>
+              {isIOS
+                ? "Follow these steps to install Jatevo Chatbot on your iOS device:"
+                : "Follow these steps to install Jatevo Chatbot on your device:"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {isIOS ? (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
+                    1
+                  </div>
+                  <p className="text-sm">
+                    Tap the share button
+                    <span
+                      aria-label="share icon"
+                      className="mx-2 inline-block"
+                      role="img"
+                    >
+                      ⎋
+                    </span>
+                    at the bottom of the screen
+                  </p>
                 </div>
-                <p className="text-sm">
-                  Tap the share button
-                  <span
-                    aria-label="share icon"
-                    className="mx-2 inline-block"
-                    role="img"
-                  >
-                    ⎋
-                  </span>
-                  at the bottom of the screen
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
-                  2
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
+                    2
+                  </div>
+                  <p className="text-sm">
+                    Scroll down and tap "Add to Home Screen"
+                    <span
+                      aria-label="plus icon"
+                      className="mx-2 inline-block"
+                      role="img"
+                    >
+                      ➕
+                    </span>
+                  </p>
                 </div>
-                <p className="text-sm">
-                  Scroll down and tap "Add to Home Screen"
-                  <span
-                    aria-label="plus icon"
-                    className="mx-2 inline-block"
-                    role="img"
-                  >
-                    ➕
-                  </span>
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
-                  3
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
+                    3
+                  </div>
+                  <p className="text-sm">
+                    Tap "Add" to install the app on your home screen
+                  </p>
                 </div>
-                <p className="text-sm">
-                  Tap "Add" to install the app on your home screen
-                </p>
-              </div>
-              <div className="rounded-lg bg-muted p-3">
-                <div className="mb-2 flex items-center gap-2">
-                  <Monitor className="h-4 w-4" />
-                  <span className="font-medium text-sm">Benefits</span>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
+                    1
+                  </div>
+                  <p className="text-sm">
+                    Tap the install button in the banner above
+                  </p>
                 </div>
-                <ul className="space-y-1 text-muted-foreground text-xs">
-                  <li>• Faster loading times</li>
-                  <li>• Offline access</li>
-                  <li>• Native app experience</li>
-                  <li>• Push notifications</li>
-                </ul>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary font-medium text-primary-foreground text-sm">
+                    2
+                  </div>
+                  <p className="text-sm">
+                    Follow the browser prompts to add the app to your home
+                    screen
+                  </p>
+                </div>
+              </>
+            )}
+            <div className="rounded-lg bg-muted p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <Monitor className="h-4 w-4" />
+                <span className="font-medium text-sm">Benefits</span>
               </div>
-              <div className="flex justify-end">
-                <Button onClick={() => setShowDialog(false)}>
-                  Got it, thanks!
-                </Button>
-              </div>
+              <ul className="space-y-1 text-muted-foreground text-xs">
+                <li>• Faster loading times</li>
+                <li>• Offline access</li>
+                <li>• Native app experience</li>
+                <li>• Push notifications</li>
+              </ul>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    );
-  }
-
-  return null;
+            <div className="flex justify-end">
+              <Button onClick={() => setShowDialog(false)}>
+                Got it, thanks!
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
